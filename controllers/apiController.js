@@ -1,30 +1,17 @@
-const https = require('https');
+import https from 'https';
 
 // METHOD 1: Using Promise
 function getWithPromise(req, res) {
   const apiURL = 'https://jsonplaceholder.typicode.com/posts';
 
-  // Create a promise to handle the API call
   const fetchData = new Promise((resolve, reject) => {
     https.get(apiURL, (response) => {
       let data = '';
-
-      // Collect chunks of data
-      response.on('data', (chunk) => {
-        data += chunk;
-      });
-
-      // When done, resolve the promise
-      response.on('end', () => {
-        resolve(JSON.parse(data));
-      });
-
-    }).on('error', (err) => {
-      reject(err);
-    });
+      response.on('data', (chunk) => data += chunk);
+      response.on('end', () => resolve(JSON.parse(data)));
+    }).on('error', (err) => reject(err));
   });
 
-  // Use .then and .catch
   fetchData
     .then((result) => {
       res.send({
@@ -45,34 +32,24 @@ async function getWithAsync(req, res) {
   const apiURL = 'https://jsonplaceholder.typicode.com/posts';
 
   try {
-    const result = await new Promise((resolve, reject) => {
-      https.get(apiURL, (response) => {
-        let data = '';
+    const response = await fetch(apiURL);
 
-        response.on('data', (chunk) => {
-          data += chunk;
-        });
+    if (!response.ok) {
+      throw new Error(`HTTP error: ${response.status}`);
+    }
 
-        response.on('end', () => {
-          resolve(JSON.parse(data));
-        });
-
-      }).on('error', (err) => {
-        reject(err);
-      });
-    });
+    const data = await response.json();
 
     res.send({
       message: 'Data fetched using Async/Await',
-      data: result
+      data,
     });
-
   } catch (error) {
     res.status(500).send({
       message: 'Error using Async/Await',
-      error: error.message
+      error: error.message,
     });
   }
 }
 
-module.exports = { getWithPromise, getWithAsync };
+export { getWithPromise, getWithAsync };
